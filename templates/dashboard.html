@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Панель управления{% endblock %}
+{% block content %}
+<h1>Панель управления</h1>
+
+<div class="cards">
+    <div class="card"><div class="num">{{ total_products }}</div><div>Товаров в номенклатуре</div></div>
+    <div class="card"><div class="num">{{ total_stock|qty }}</div><div>Всего на складе</div></div>
+    <div class="card"><div class="num">{{ total_receipts }}</div><div>Документов приёмки</div></div>
+    <div class="card"><div class="num">{{ total_shipments }}</div><div>Документов отгрузки</div></div>
+</div>
+
+{% if low_stock %}
+<h2>⚠ Товары ниже минимального остатка</h2>
+<table class="grid">
+    <thead>
+    <tr><th>Артикул</th><th>Наименование</th><th>Остаток</th><th>Минимум</th></tr>
+    </thead>
+    <tbody>
+    {% for p, qty in low_stock %}
+    <tr>
+        <td>{{ p.sku }}</td><td>{{ p.name }}</td>
+        <td class="red">{{ qty|qty }}</td><td>{{ p.min_stock|qty }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<h2>Последние действия пользователей</h2>
+<table class="grid">
+    <thead>
+    <tr>
+        <th>Дата и время</th>
+        <th>Пользователь</th>
+        <th>Действие</th>
+        <th>Объект</th>
+        <th>Детали</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for l in recent_logs %}
+    <tr>
+        <td>{{ l.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+        <td>{{ l.user.full_name if l.user else '—' }}</td>
+        <td>{{ l.action_human }}</td>
+        <td>{{ l.entity_human }}{% if l.entity_id %} №{{ l.entity_id }}{% endif %}</td>
+        <td>{{ l.details_human }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5">Пока нет записей</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

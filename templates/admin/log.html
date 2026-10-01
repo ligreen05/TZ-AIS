@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Журнал действий{% endblock %}
+{% block content %}
+<h1>Журнал действий пользователей</h1>
+
+<table class="grid">
+    <thead>
+    <tr>
+        <th>Дата и время</th>
+        <th>Пользователь</th>
+        <th>Действие</th>
+        <th>Объект</th>
+        <th>Детали</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for l in pagination.items %}
+    <tr>
+        <td>{{ l.created_at.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+        <td>{{ l.user.full_name if l.user else '—' }}</td>
+        <td>{{ l.action_human }}</td>
+        <td>
+            {% if l.entity_human %}
+                {{ l.entity_human }}{% if l.entity_id %} №{{ l.entity_id }}{% endif %}
+            {% else %}—{% endif %}
+        </td>
+        <td>{{ l.details_human or '—' }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5">Записей нет</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% if pagination.pages > 1 %}
+<div class="pagination">
+    {% for n in range(1, pagination.pages + 1) %}
+    <a href="?page={{ n }}" class="{% if n == pagination.page %}active{% endif %}">{{ n }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

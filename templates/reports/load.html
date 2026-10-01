@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Загрузка сотрудников{% endblock %}
+{% block content %}
+<h1>Загрузка сотрудников (по документам приёмки)</h1>
+
+<table class="grid">
+    <thead>
+    <tr><th>Сотрудник</th><th>Роль</th><th>Документов приёмки</th></tr>
+    </thead>
+    <tbody>
+    {% for user, cnt in rows %}
+    <tr>
+        <td>{{ user.full_name }}</td>
+        <td>{{ user.role.name }}</td>
+        <td>{{ cnt }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="3">Нет данных</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

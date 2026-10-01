@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Документы отгрузки{% endblock %}
+{% block content %}
+<h1>Документы отгрузки</h1>
+
+{% if current_user.has_role('admin', 'operator', 'storekeeper', 'manager') %}
+<a class="btn" href="{{ url_for('operations.shipment_new') }}">+ Новая отгрузка</a>
+{% endif %}
+
+<table class="grid">
+    <thead>
+    <tr>
+        <th>Номер</th>
+        <th>Дата</th>
+        <th>Покупатель</th>
+        <th>Склад</th>
+        <th>Статус</th>
+        <th>Комментарий</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for d in pagination.items %}
+    <tr>
+        <td>{{ d.number }}</td>
+        <td>{{ d.doc_date.strftime('%d.%m.%Y') }}</td>
+        <td>{{ d.customer.name }}</td>
+        <td>{{ d.warehouse.name }}</td>
+        <td>
+            {% if d.is_cancelled %}
+                <span class="badge" style="background:#e03131;">Отменён</span>
+            {% else %}
+                <span class="badge badge-green">Активен</span>
+            {% endif %}
+        </td>
+        <td>{{ d.comment or '' }}</td>
+        <td>
+            <a href="{{ url_for('operations.shipment_view', doc_id=d.id) }}">Открыть</a>
+        </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7">Документов нет</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% if pagination.pages > 1 %}
+<div class="pagination">
+    {% for n in range(1, pagination.pages + 1) %}
+    <a href="?page={{ n }}" class="{% if n == pagination.page %}active{% endif %}">{{ n }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

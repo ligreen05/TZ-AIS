@@ -1,0 +1,422 @@
+/* =========================================================
+   КОМПОНЕНТЫ: карточки, таблицы, формы, кнопки и др.
+   ========================================================= */
+
+/* ---------- Flash-сообщения ---------- */
+.flash {
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    border-left: 4px solid;
+    font-size: 13px;
+}
+
+.flash-success {
+    background: #e6ffed;
+    border-color: #2f9e44;
+    color: #1b4332;
+}
+
+.flash-danger {
+    background: #ffe3e3;
+    border-color: #e03131;
+    color: #7a1212;
+}
+
+.flash-warning {
+    background: #fff4e6;
+    border-color: #f08c00;
+    color: #7c4202;
+}
+
+.flash-info {
+    background: #e7f5ff;
+    border-color: #1c7ed6;
+    color: #0b3d68;
+}
+
+/* ---------- Карточки-счётчики ---------- */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+    transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.card .num {
+    font-size: 26px;
+    font-weight: bold;
+    color: #1c7ed6;
+    margin-bottom: 6px;
+}
+
+.card-link:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+/* ---------- Таблицы ---------- */
+table.grid {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    margin-bottom: 20px;
+}
+
+table.grid th,
+table.grid td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid #eaecef;
+    font-size: 13px;
+    vertical-align: top;
+}
+
+table.grid thead th {
+    background: #f1f3f5;
+    font-weight: 600;
+    color: #495057;
+    white-space: nowrap;
+}
+
+table.grid tbody tr:hover td {
+    background: #f8f9fa;
+}
+
+table.grid tbody tr:last-child td {
+    border-bottom: none;
+}
+
+table.grid select,
+table.grid input {
+    width: 100%;
+    padding: 4px 6px;
+    font-size: 13px;
+}
+
+/* ---------- Формы ---------- */
+.form-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    margin-bottom: 20px;
+}
+
+.form-card label {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: #495057;
+}
+
+.form-card input[type="text"],
+.form-card input[type="number"],
+.form-card input[type="date"],
+.form-card input[type="email"],
+.form-card input[type="password"],
+.form-card select,
+.form-card textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    margin-top: 4px;
+    font-family: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form-card input:focus,
+.form-card select:focus,
+.form-card textarea:focus {
+    outline: none;
+    border-color: #1c7ed6;
+    box-shadow: 0 0 0 3px rgba(28, 126, 214, 0.15);
+}
+
+.form-field {
+    margin-bottom: 12px;
+}
+
+.field-error {
+    color: #e03131;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.form-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ---------- Кнопки ---------- */
+.btn {
+    display: inline-block;
+    padding: 8px 14px;
+    background: #1c7ed6;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 13px;
+    font-family: inherit;
+    transition: background 0.15s;
+    line-height: 1.4;
+}
+
+.btn:hover {
+    background: #1864ab;
+    color: #fff;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: #868e96;
+}
+
+.btn-secondary:hover {
+    background: #495057;
+}
+
+.btn-remove {
+    background: transparent;
+    color: #e03131;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    line-height: 1;
+}
+
+.btn-remove:hover {
+    background: #ffe3e3;
+    border-radius: 4px;
+}
+
+/* ---------- Фильтры ---------- */
+.filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 16px;
+    background: #fff;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.filters input,
+.filters select {
+    padding: 6px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: inherit;
+}
+
+.filters label {
+    font-size: 13px;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ---------- Пагинация ---------- */
+.pagination {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.pagination a {
+    padding: 6px 10px;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #1c7ed6;
+    font-size: 13px;
+    min-width: 34px;
+    text-align: center;
+    transition: background 0.15s;
+}
+
+.pagination a:hover {
+    background: #e7f5ff;
+    text-decoration: none;
+}
+
+.pagination a.active {
+    background: #1c7ed6;
+    color: #fff;
+    border-color: #1c7ed6;
+}
+
+/* ---------- Бейджи ---------- */
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    color: #fff;
+    line-height: 1.4;
+}
+
+.badge-green {
+    background: #2f9e44;
+}
+
+.badge-gray {
+    background: #868e96;
+}
+
+/* ---------- Форма логина ---------- */
+.login-box {
+    max-width: 360px;
+    margin: 80px auto;
+    background: #fff;
+    padding: 28px;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.login-box h1 {
+    text-align: center;
+    margin-top: 0;
+}
+
+.login-box label {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: #495057;
+}
+
+.login-box input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    margin-top: 4px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.login-box input:focus {
+    outline: none;
+    border-color: #1c7ed6;
+    box-shadow: 0 0 0 3px rgba(28, 126, 214, 0.15);
+}
+
+.login-box .btn {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.login-box .hint {
+    font-size: 12px;
+    color: #868e96;
+    margin-top: 16px;
+    line-height: 1.6;
+}
+
+/* ---------- Справочники ---------- */
+.dictionaries-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.dict-block {
+    background: #fff;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.dict-block h2 {
+    margin-top: 0;
+    font-size: 15px;
+    color: #1f2d3d;
+}
+
+.dict-block ul {
+    padding-left: 18px;
+    margin: 0;
+}
+
+.dict-block li {
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+.dict-block small {
+    color: #868e96;
+    margin-left: 4px;
+}
+
+/* ---------- Информационная панель ---------- */
+.info-panel {
+    background: #fff;
+    padding: 14px 18px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 8px;
+    margin-bottom: 20px;
+    font-size: 13px;
+}
+
+.info-panel b {
+    color: #495057;
+}
+
+/* ---------- Страница ошибки ---------- */
+.error-box {
+    text-align: center;
+    padding: 60px 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.error-box h1 {
+    font-size: 48px;
+    color: #e03131;
+    margin: 0 0 12px;
+}
+
+.error-box p {
+    color: #495057;
+    margin-bottom: 20px;
+}

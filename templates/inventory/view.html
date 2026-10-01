@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Инвентаризация {{ doc.number }}{% endblock %}
+{% block content %}
+<h1>Инвентаризация {{ doc.number }}</h1>
+
+<div class="info-panel">
+    <div><b>Дата:</b> {{ doc.doc_date.strftime('%d.%m.%Y') }}</div>
+    <div><b>Склад:</b> {{ doc.warehouse.name }}</div>
+    <div><b>Статус:</b>
+        {% if doc.status == 'done' %}
+            <span class="badge badge-green">Проведена</span>
+        {% else %}
+            <span class="badge badge-gray">Черновик</span>
+        {% endif %}
+    </div>
+    <div><b>Комментарий:</b> {{ doc.comment or '—' }}</div>
+</div>
+
+<h2>Ведомость расхождений</h2>
+<table class="grid">
+    <thead>
+    <tr>
+        <th>Товар</th><th>Место хранения</th>
+        <th>Учётный остаток</th><th>Факт</th><th>Расхождение</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for row in rows %}
+    <tr>
+        <td>{{ row.item.product.sku }} — {{ row.item.product.name }}</td>
+        <td>{{ row.item.location.code if row.item.location else '—' }}</td>
+        <td>{{ row.expected|qty }}</td>
+        <td>{{ row.item.fact_qty|qty }}</td>
+        <td class="{% if row.diff > 0 %}green{% elif row.diff < 0 %}red{% endif %}">
+            {% if row.diff > 0 %}+{% endif %}{{ row.diff|qty }}
+        </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5">Позиций нет</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% if doc.status != 'done' and current_user.has_role('admin', 'storekeeper', 'head') %}
+<form method="post" action="{{ url_for('inventory.apply', iid=doc.id) }}"
+      onsubmit="return confirm('Провести инвентаризацию и обновить остатки?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn">Провести инвентаризацию</button>
+</form>
+{% endif %}
+
+<div class="form-actions">
+    <a class="btn btn-secondary" href="{{ url_for('inventory.list_inventories') }}">← К списку</a>
+</div>
+{% endblock %}

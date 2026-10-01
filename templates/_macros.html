@@ -1,0 +1,24 @@
+{# CSRF-скрытое поле #}
+{% macro csrf() %}
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{% endmacro %}
+
+{# Поле формы с ошибкой #}
+{% macro field(field, type="text") %}
+<div class="form-field">
+    {{ field.label }}
+    {{ field(class="input") }}
+    {% if field.errors %}
+        <div class="field-error">{{ field.errors[0] }}</div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# Flash-сообщения #}
+{% macro flashes() %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+    <div class="flash flash-{{ cat }}">{{ msg }}</div>
+  {% endfor %}
+{% endwith %}
+{% endmacro %}

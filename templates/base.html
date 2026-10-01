@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}АИС «Складской учёт»{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+</head>
+<body>
+<header class="topbar">
+    <div class="brand">📦 АИС «Складской учёт»</div>
+    {% if current_user.is_authenticated %}
+    <nav class="nav">
+        <a href="{{ url_for('main.dashboard') }}">Главная</a>
+        <a href="{{ url_for('products.list_products') }}">Товары</a>
+        <a href="{{ url_for('operations.receipts') }}">Приёмка</a>
+        <a href="{{ url_for('operations.shipments') }}">Отгрузка</a>
+        <a href="{{ url_for('operations.transfers') }}">Перемещение</a>
+        <a href="{{ url_for('operations.writeoffs') }}">Списание</a>
+        <a href="{{ url_for('inventory.list_inventories') }}">Инвентаризация</a>
+        <a href="{{ url_for('reports.index') }}">Отчёты</a>
+        <a href="{{ url_for('products.dictionaries') }}">Справочники</a>
+        {% if current_user.has_role('admin') %}
+        <a href="{{ url_for('admin.users') }}">Пользователи</a>
+        <a href="{{ url_for('admin.log') }}">Журнал</a>
+        {% endif %}
+    </nav>
+    <div class="user">
+    {{ current_user.full_name }}
+    <span class="role">({{ current_user.role.name }})</span>
+    <a href="{{ url_for('auth.change_password') }}">Пароль</a>
+    <a href="{{ url_for('auth.logout') }}">Выход</a>
+</div>
+    {% endif %}
+</header>
+
+<main class="container">
+    {% from "_macros.html" import flashes %}
+    {{ flashes() }}
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">АИС «Складской учёт» · Python / Flask</footer>
+
+<script src="{{ url_for('static', filename='js/forms.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Движение товаров{% endblock %}
+{% block content %}
+<h1>Движение товаров за период</h1>
+
+<form method="get" class="filters">
+    <label>С <input type="date" name="from" value="{{ date_from }}"></label>
+    <label>По <input type="date" name="to" value="{{ date_to }}"></label>
+    <button type="submit" class="btn">Построить</button>
+</form>
+
+<h2>Сводка по товарам</h2>
+<table class="grid">
+    <thead>
+    <tr><th>Артикул</th><th>Наименование</th><th>Приход</th><th>Расход</th></tr>
+    </thead>
+    <tbody>
+    {% for s in summary.values() %}
+    <tr>
+        <td>{{ s.product.sku }}</td>
+        <td>{{ s.product.name }}</td>
+        <td class="green">{{ s['in']|round(3) }}</td>
+        <td class="red">{{ s['out']|round(3) }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4">Нет данных за период</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<h2>Документы приёмки</h2>
+<table class="grid">
+    <thead><tr><th>Номер</th><th>Дата</th><th>Товар</th><th>Кол-во</th></tr></thead>
+    <tbody>
+    {% for item, doc in receipts %}
+    <tr>
+        <td>{{ doc.number }}</td>
+        <td>{{ doc.doc_date.strftime('%d.%m.%Y') }}</td>
+        <td>{{ item.product.name }}</td>
+        <td>{{ item.quantity|qty }}</td>
+    </tr>
+    {% else %}<tr><td colspan="4">Приёмок нет</td></tr>{% endfor %}
+    </tbody>
+</table>
+
+<h2>Документы отгрузки</h2>
+<table class="grid">
+    <thead><tr><th>Номер</th><th>Дата</th><th>Товар</th><th>Кол-во</th></tr></thead>
+    <tbody>
+    {% for item, doc in shipments %}
+    <tr>
+        <td>{{ doc.number }}</td>
+        <td>{{ doc.doc_date.strftime('%d.%m.%Y') }}</td>
+        <td>{{ item.product.name }}</td>
+        <td>{{ item.quantity|qty }}</td>
+    </tr>
+    {% else %}<tr><td colspan="4">Отгрузок нет</td></tr>{% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field %}
+{% block title %}Вход в систему{% endblock %}
+{% block content %}
+<div class="login-box">
+    <h1>Вход в систему</h1>
+    <form method="post">
+        {{ csrf() }}
+        {{ field(form.username) }}
+        {{ field(form.password, "password") }}
+        <button type="submit" class="btn">Войти</button>
+    </form>
+    <p class="hint">
+        Демо: admin/admin123, sklad/sklad123, oper/oper123,<br>
+        menedzher/m123, rukov/r123
+    </p>
+</div>
+{% endblock %}

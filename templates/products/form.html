@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field %}
+{% block title %}{{ 'Редактирование' if product else 'Новый' }} товар{% endblock %}
+{% block content %}
+<h1>{{ 'Редактирование' if product else 'Новый' }} товар</h1>
+
+<form method="post" class="form-card">
+    {{ csrf() }}
+    {{ field(form.sku) }}
+    {{ field(form.name) }}
+    {{ field(form.category_id) }}
+    {{ field(form.unit_id) }}
+    {{ field(form.min_stock) }}
+    <div class="form-actions">
+        <button type="submit" class="btn">{{ form.submit.label.text }}</button>
+        <a class="btn btn-secondary" href="{{ url_for('products.list_products') }}">Отмена</a>
+    </div>
+</form>
+{% endblock %}

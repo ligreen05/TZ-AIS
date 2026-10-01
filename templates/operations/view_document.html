@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} {{ doc.number }}{% endblock %}
+{% block content %}
+<h1>{{ title }} {{ doc.number }}</h1>
+
+{% if doc.is_cancelled %}
+<div class="flash flash-danger" style="margin-bottom: 16px;">
+    ⛔ <b>Документ отменён</b>
+    {% if doc.cancelled_at %}
+        — {{ doc.cancelled_at.strftime('%d.%m.%Y %H:%M') }}
+    {% endif %}
+    {% if doc.canceller %}
+        ({{ doc.canceller.full_name }})
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="info-panel">
+    <div><b>Дата:</b> {{ doc.doc_date.strftime('%d.%m.%Y') }}</div>
+    <div><b>Склад:</b> {{ doc.warehouse.name }}</div>
+
+    {% if doc_type == "receipt" %}
+        <div><b>Поставщик:</b> {{ doc.supplier.name }}</div>
+    {% elif doc_type == "shipment" %}
+        <div><b>Покупатель:</b> {{ doc.customer.name }}</div>
+    {% elif doc_type == "writeoff" %}
+        <div><b>Причина:</b> {{ doc.reason or '—' }}</div>
+    {% endif %}
+
+    <div><b>Создал:</b> {{ doc.created_by }}</div>
+    <div><b>Комментарий:</b> {{ doc.comment or '—' }}</div>
+</div>
+
+<h2>Позиции документа</h2>
+<table class="grid">
+    <thead>
+    <tr>
+        <th>Товар</th>
+        {% if doc_type == "transfer" %}
+            <th>Откуда</th>
+            <th>Куда</th>
+        {% else %}
+            <th>Место хранения</th>
+        {% endif %}
+        <th>Кол-во</th>
+        {% if doc_type in ("receipt", "shipment") %}
+            <th>Цена</th>
+            <th>Сумма</th>
+        {% endif %}
+    </tr>
+    </thead>
+    <tbody>
+    {% set ns = namespace(total_qty=0, total_sum=0) %}
+    {% for item in doc.items %}
+        <tr>
+            <td>{{ item.product.sku }} — {{ item.product.name }}</td>
+            {% if doc_type == "transfer" %}
+                <td>{{ item.from_location.code if item.from_location else '—' }}</td>
+                <td>{{ item.to_location.code if item.to_location else '—' }}</td>
+            {% else %}
+                <td>{{ item.location.code if item.location else '—' }}</td>
+            {% endif %}
+            <td>{{ item.quantity|qty }}</td>
+            {% if doc_type in ("receipt", "shipment") %}
+                <td>{{ "%.2f"|format(item.price or 0) }}</td>
+                <td>{{ "%.2f"|format((item.price or 0) * item.quantity) }}</td>
+                {% set ns.total_sum = ns.total_sum + (item.price or 0) * item.quantity %}
+            {% endif %}
+            {% set ns.total_qty = ns.total_qty + item.quantity %}
+        </tr>
+    {% endfor %}
+    <tr style="font-weight: bold; background: #f1f3f5;">
+        <td colspan="{% if doc_type == 'transfer' %}3{% else %}2{% endif %}">Итого:</td>
+        <td>{{ ns.total_qty|qty }}</td>
+        {% if doc_type in ("receipt", "shipment") %}
+            <td></td>
+            <td>{{ "%.2f"|format(ns.total_sum) }}</td>
+        {% endif %}
+    </tr>
+    </tbody>
+</table>
+
+<div class="form-actions">
+    <button type="button" class="btn" onclick="window.print()">🖨 Печать</button>
+
+    {% if not doc.is_cancelled and current_user.has_role('admin', 'storekeeper') %}
+    <form method="post"
+          action="{{ url_for('operations.' + doc_type + '_cancel', doc_id=doc.id) }}"
+          onsubmit="return confirm('Отменить документ {{ doc.number }}? Остатки будут пересчитаны.');"
+          style="display:inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn" style="background:#e03131;">⛔ Отменить документ</button>
+    </form>
+    {% endif %}
+
+    <a class="btn btn-secondary" href="{{ back_url }}">← К списку</a>
+</div>
+{% endblock %}

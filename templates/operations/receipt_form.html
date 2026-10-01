@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field %}
+{% block title %}Новая приёмка{% endblock %}
+{% block content %}
+<h1>Новая приёмка</h1>
+
+<form method="post" class="form-card">
+    {{ csrf() }}
+    <div class="form-row">
+        {{ field(form.doc_date) }}
+        {{ field(form.supplier_id) }}
+        {{ field(form.warehouse_id) }}
+    </div>
+    {{ field(form.comment) }}
+
+    <h3>Позиции документа</h3>
+    <table class="grid items-table" data-items-table>
+        <thead>
+        <tr><th>Товар</th><th>Место</th><th>Кол-во</th><th>Цена</th><th></th></tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>
+                <select name="product_id[]" required>
+                    {% for p in products %}
+                    <option value="{{ p.id }}">{{ p.sku }} — {{ p.name }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <select name="location_id[]">
+                    {% for l in locations %}
+                    <option value="{{ l.id }}">{{ l.warehouse.name }} / {{ l.code }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td><input type="number" step="0.001" name="quantity[]" required></td>
+            <td><input type="number" step="0.01" name="price[]" value="0"></td>
+            <td><button type="button" class="btn-remove" data-remove-row>✕</button></td>
+        </tr>
+        </tbody>
+    </table>
+    <button type="button" class="btn btn-secondary" data-add-row>+ Добавить строку</button>
+
+    <div class="form-actions">
+        <button type="submit" class="btn">{{ form.submit.label.text }}</button>
+        <a class="btn btn-secondary" href="{{ url_for('operations.receipts') }}">Отмена</a>
+    </div>
+</form>
+{% endblock %}

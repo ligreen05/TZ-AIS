@@ -1,0 +1,10 @@
+{% macro pagination(p, endpoint, **kwargs) %}
+{% if p.pages > 1 %}
+<div class="pagination">
+    {% for n in range(1, p.pages + 1) %}
+        <a href="{{ url_for(endpoint, page=n, **kwargs) }}"
+           class="{% if n == p.page %}active{% endif %}">{{ n }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+{% endmacro %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Пользователи{% endblock %}
+{% block content %}
+<h1>Пользователи системы</h1>
+
+<h2>Создать пользователя</h2>
+<form method="post" action="{{ url_for('admin.user_new') }}" class="form-card">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-row">
+        <label>Логин *<input type="text" name="username" required></label>
+        <label>ФИО *<input type="text" name="full_name" required></label>
+        <label>Email *<input type="email" name="email" required></label>
+    </div>
+    <div class="form-row">
+        <label>Пароль *<input type="password" name="password" required></label>
+        <label>Роль *
+            <select name="role_id" required>
+                {% for r in roles %}<option value="{{ r.id }}">{{ r.name }}</option>{% endfor %}
+            </select>
+        </label>
+    </div>
+    <button type="submit" class="btn">Создать</button>
+</form>
+
+<h2>Список пользователей</h2>
+<table class="grid">
+    <thead>
+    <tr><th>Логин</th><th>ФИО</th><th>Email</th><th>Роль</th><th>Статус</th><th></th></tr>
+    </thead>
+    <tbody>
+    {% for u in pagination.items %}
+    <tr>
+        <td>{{ u.username }}</td>
+        <td>{{ u.full_name }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.role.name }}</td>
+        <td>
+            {% if u.is_active_flag %}
+                <span class="badge badge-green">Активен</span>
+            {% else %}
+                <span class="badge badge-gray">Заблокирован</span>
+            {% endif %}
+        </td>
+        <td>
+            {% if u.id != current_user.id %}
+            <form method="post" action="{{ url_for('admin.user_toggle', uid=u.id) }}" style="display:inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-secondary">
+                    {{ 'Заблокировать' if u.is_active_flag else 'Разблокировать' }}
+                </button>
+            </form>
+            {% endif %}
+        </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6">Пользователей нет</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% if pagination.pages > 1 %}
+<div class="pagination">
+    {% for n in range(1, pagination.pages + 1) %}
+    <a href="?page={{ n }}" class="{% if n == pagination.page %}active{% endif %}">{{ n }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

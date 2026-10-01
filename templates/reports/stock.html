@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Остатки товаров{% endblock %}
+{% block content %}
+<h1>Отчёт по остаткам товаров</h1>
+
+<form method="get" class="filters">
+    <select name="warehouse">
+        <option value="">Все склады</option>
+        {% for w in warehouses %}
+        <option value="{{ w.id }}" {% if warehouse_id == w.id %}selected{% endif %}>{{ w.name }}</option>
+        {% endfor %}
+    </select>
+    <select name="category">
+        <option value="">Все категории</option>
+        {% for c in categories %}
+        <option value="{{ c.id }}" {% if category_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit" class="btn">Применить</button>
+    <a class="btn btn-secondary" href="{{ url_for('reports.stock_csv', warehouse=warehouse_id) }}">Экспорт в CSV</a>
+</form>
+
+<table class="grid">
+    <thead>
+    <tr><th>Артикул</th><th>Наименование</th><th>Склад</th><th>Остаток</th></tr>
+    </thead>
+    <tbody>
+    {% for p, wh, qty in rows %}
+    <tr>
+        <td>{{ p.sku }}</td><td>{{ p.name }}</td>
+        <td>{{ wh.name }}</td><td>{{ qty|qty }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4">Нет данных</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

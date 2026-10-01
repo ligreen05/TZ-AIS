@@ -14,13 +14,13 @@
 - [Архитектура](#-архитектура)
 - [Установка](#-установка)
 - [Запуск](#-запуск)
+- [Конфигурация](#-конфигурация)
 - [Учётные записи](#-учётные-записи)
 - [Структура проекта](#-структура-проекта)
 - [Модель данных](#-модель-данных)
 - [Роли и права](#-роли-и-права)
 - [Тестирование](#-тестирование)
 - [Безопасность](#-безопасность)
-- [Скриншоты](#-скриншоты)
 - [Лицензия](#-лицензия)
 
 ---
@@ -72,10 +72,11 @@
 - 🖨 Печать накладных (HTML + `window.print()`)
 - 📥 Экспорт отчётов в CSV (с BOM UTF-8 для Excel)
 - 📝 Журнал действий с человеко-понятными названиями
-- 🔐 Хеширование паролей (pbkdf2:sha256)
+- 🔐 Хеширование паролей (pbkdf2:sha256, 600 000 итераций)
 - ✅ Отмена документов с автоматическим пересчётом остатков
 - 🎨 Адаптивный интерфейс на чистом CSS
-- 🧪 48 автотестов с покрытием ~93%
+- 🧪 52 автотеста с покрытием ~93%
+- 🛡 HTTPS-форсинг и security headers в production
 
 ---
 
@@ -88,6 +89,7 @@
 | **Flask-SQLAlchemy** | 3.1.1 | ORM |
 | **Flask-Login** | 0.6.3 | Аутентификация |
 | **Flask-WTF** | 1.3.0 | Формы + CSRF |
+| **Flask-Talisman** | 1.1.0 | HTTPS + security headers (prod) |
 | **WTForms** | 3.2.2 | Валидация форм |
 | **SQLAlchemy** | 2.0.43 | Ядро ORM |
 | **SQLite** | — | СУБД (легко заменяется на PostgreSQL) |
@@ -136,6 +138,7 @@
 - **Защита от N+1** — `lazy="joined"` и `lazy="selectin"` на связях.
 - **Идемпотентность** — повторная отмена документа отклоняется.
 - **Аудит** — все значимые действия пишутся в `ActionLog`.
+- **Безопасные ошибки** — `flash_error()` логирует реальную ошибку, пользователю показывает общую.
 
 ---
 
@@ -185,11 +188,13 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-**5. Создай базу данных с демо-данными:**
+**5. Создай базу данных:**
 
 ```bash
 python init_db.py
 ```
+
+В **DEV-режиме** скрипт сгенерирует случайные пароли и напечатает их один раз. Сохрани их.
 
 ---
 
@@ -207,7 +212,28 @@ python app.py
 
 ### Production-режим
 
-Для production используй **gunicorn** (Linux) или **waitress** (Windows):
+**1. Задай переменные окружения:**
+
+```bash
+export FLASK_ENV=production
+export FLASK_SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))")
+export ADMIN_PASSWORD=<сложный-пароль>
+export SKLAD_PASSWORD=<сложный-пароль>
+export OPER_PASSWORD=<сложный-пароль>
+export MANAGER_PASSWORD=<сложный-пароль>
+export HEAD_PASSWORD=<сложный-пароль>
+export DATABASE_URL=postgresql://user:pass@host/dbname
+```
+
+**Windows PowerShell:**
+```powershell
+$env:FLASK_ENV = "production"
+$env:FLASK_SECRET_KEY = (python -c "import secrets; print(secrets.token_hex(32))")
+$env:ADMIN_PASSWORD = "сложный-пароль"
+# ... и т.д.
+```
+
+**2. Запусти через WSGI-сервер:**
 
 ```bash
 # Linux
@@ -217,31 +243,81 @@ gunicorn -w 4 -b 0.0.0.0:5000 "app:app"
 waitress-serve --port=5000 app:app
 ```
 
-### Переменные окружения
+**Что происходит в production:**
 
-Для production задай:
+- ✅ При отсутствии `FLASK_SECRET_KEY` приложение **не запустится** — защита от дефолтных ключей.
+- ✅ При отсутствии `*_PASSWORD` `init_db.py` **не создаст пользователей** — защита от дефолтных паролей.
+- ✅ Talisman автоматически форсит HTTPS и добавляет security headers.
+- ✅ `SESSION_COOKIE_SECURE=True` — cookie передаются только по HTTPS.
+
+---
+
+## ⚙️ Конфигурация
+
+Все параметры настраиваются через переменные окружения в `config.py`.
+
+### Обязательные в PROD
+
+| Переменная | Назначение | Пример |
+|---|---|---|
+| `FLASK_ENV` | Режим работы | `production` |
+| `FLASK_SECRET_KEY` | Ключ подписи сессий | 64-символьный hex |
+| `DATABASE_URL` | Строка подключения к БД | `postgresql://...` |
+| `ADMIN_PASSWORD` | Пароль админа | сложный |
+| `SKLAD_PASSWORD` | Пароль кладовщика | сложный |
+| `OPER_PASSWORD` | Пароль оператора | сложный |
+| `MANAGER_PASSWORD` | Пароль менеджера | сложный |
+| `HEAD_PASSWORD` | Пароль руководителя | сложный |
+
+### Опциональные
+
+| Переменная | По умолчанию | Назначение |
+|---|---|---|
+| `LOG_LEVEL` | `INFO` | Уровень логирования |
+| `ITEMS_PER_PAGE` | `20` | Элементов на странице |
+
+### Генерация `SECRET_KEY`
 
 ```bash
-FLASK_SECRET_KEY=<длинная-случайная-строка>
-DATABASE_URL=postgresql://user:pass@host/dbname
-LOG_LEVEL=INFO
+python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
 ---
 
 ## 👥 Учётные записи
 
-После `init_db.py` создаются **5 демо-пользователей**:
+### Создание паролей
 
-| Логин | Пароль | Роль | Права |
-|---|---|---|---|
-| `admin` | `admin123` | Администратор | Полный доступ |
-| `sklad` | `sklad123` | Кладовщик | Приёмка, отгрузка, перемещение, списание, инвентаризация, отмена документов |
-| `oper` | `oper123` | Оператор склада | Создание документов, управление товарами |
-| `menedzher` | `m123` | Менеджер по продажам | Создание отгрузок, просмотр остатков |
-| `rukov` | `r123` | Руководитель склада | Просмотр всех данных, отчёты |
+**Способ 1 — переменные окружения (рекомендуется для PROD):**
 
-> ⚠️ **Для production обязательно смени пароли** через страницу `/change-password`.
+```bash
+export ADMIN_PASSWORD=<сложный-пароль>
+export SKLAD_PASSWORD=<сложный-пароль>
+# ...
+python init_db.py
+```
+
+**Способ 2 — автоматическая генерация (DEV):**
+
+```bash
+python init_db.py
+```
+
+Скрипт:
+- в **DEV-режиме** — генерирует случайные пароли и **печатает их один раз**;
+- в **PROD-режиме** — требует пароли из ENV, иначе падает с ошибкой.
+
+### Роли пользователей
+
+| Логин | Роль | Что может |
+|---|---|---|
+| `admin` | Администратор | Полный доступ ко всем разделам |
+| `sklad` | Кладовщик | Приёмка, отгрузка, перемещение, списание, инвентаризация, отмена документов |
+| `oper` | Оператор | Управление товарами, создание документов |
+| `menedzher` | Менеджер | Только отгрузки и просмотр остатков |
+| `rukov` | Руководитель | Просмотр всех данных, отчёты (кроме загрузки сотрудников) |
+
+> ⚠️ После первого входа **обязательно смени пароль** через страницу `/change-password`.
 
 ---
 
@@ -251,10 +327,10 @@ LOG_LEVEL=INFO
 warehouse_ais/
 │
 ├── app.py                      # Точка входа, фабрика create_app()
-├── config.py                   # Конфигурация
+├── config.py                   # Конфигурация (SECRET_KEY, cookies, БД)
 ├── extensions.py               # db, login_manager, csrf
 ├── models.py                   # SQLAlchemy-модели
-├── init_db.py                  # Скрипт инициализации БД
+├── init_db.py                  # Инициализация БД (генерация паролей)
 ├── requirements.txt            # Зависимости
 ├── pyproject.toml              # Настройки pytest, ruff, mypy
 ├── README.md                   # Этот файл
@@ -264,9 +340,9 @@ warehouse_ais/
 │   ├── auth.py                 # Вход/выход/смена пароля
 │   ├── main.py                 # Дашборд
 │   ├── products.py             # Товары и справочники
-│   ├── operations.py           # Документы (приёмка, отгрузка, ...)
-│   ├── inventory.py            # Инвентаризация
-│   ├── reports.py              # Отчёты
+│   ├── operations.py           # Документы + RBAC на чтение
+│   ├── inventory.py            # Инвентаризация + RBAC
+│   ├── reports.py              # Отчёты + RBAC
 │   └── admin.py                # Пользователи, журнал
 │
 ├── services/                   # Бизнес-логика
@@ -286,61 +362,42 @@ warehouse_ais/
 │   ├── decorators.py           # @require_role
 │   ├── pagination.py           # Единая пагинация
 │   ├── logging.py              # Логгер + log_action
-│   └── transaction.py          # @contextmanager transaction()
+│   ├── transaction.py          # @contextmanager transaction()
+│   └── errors.py               # flash_error (безопасные ошибки)
 │
 ├── templates/                  # Jinja2-шаблоны
-│   ├── base.html               # Базовый шаблон
+│   ├── base.html
 │   ├── login.html
 │   ├── dashboard.html
 │   ├── error.html
-│   ├── _macros.html            # Макросы (csrf, field, flashes)
+│   ├── _macros.html
 │   ├── _pagination.html
 │   ├── auth/
 │   │   └── change_password.html
 │   ├── products/
-│   │   ├── list.html
-│   │   ├── form.html
-│   │   └── dictionaries.html
 │   ├── operations/
-│   │   ├── receipts.html
-│   │   ├── receipt_form.html
-│   │   ├── shipments.html
-│   │   ├── shipment_form.html
-│   │   ├── transfers.html
-│   │   ├── transfer_form.html
-│   │   ├── writeoffs.html
-│   │   ├── writeoff_form.html
 │   │   └── view_document.html  # Универсальный просмотр документа
 │   ├── inventory/
-│   │   ├── list.html
-│   │   ├── form.html
-│   │   └── view.html
 │   ├── reports/
-│   │   ├── index.html
-│   │   ├── stock.html
-│   │   ├── movement.html
-│   │   └── load.html
 │   └── admin/
-│       ├── users.html
-│       └── log.html
 │
 ├── static/                     # Статика
 │   ├── css/
-│   │   ├── base.css            # Каркас, шрифты, шапка
-│   │   └── components.css      # Компоненты
+│   │   ├── base.css
+│   │   └── components.css
 │   └── js/
-│       └── forms.js            # Динамические строки в формах
+│       └── forms.js
 │
 └── tests/                      # Тесты
     ├── __init__.py
-    ├── conftest.py             # Фикстуры
+    ├── conftest.py
     ├── test_auth.py            # 8 тестов
     ├── test_products.py        # 7 тестов
     ├── test_operations.py      # 7 тестов
     ├── test_inventory.py       # 3 теста
     ├── test_reports.py         # 4 теста
     ├── test_admin.py           # 6 тестов
-    ├── test_security.py        # 7 тестов
+    ├── test_security.py        # 11 тестов (включая RBAC на чтение)
     └── test_cancel.py          # 6 тестов
 ```
 
@@ -381,18 +438,26 @@ Warehouse ─┼─ TransferDoc ── TransferItem
 
 ## 🔐 Роли и права
 
-| Роль | Товары | Приёмка | Отгрузка | Перемещение | Списание | Инвентаризация | Отчёты | Админка |
-|---|---|---|---|---|---|---|---|---|
-| **Администратор** | ✅ CRUD | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Кладовщик** | 👁 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| **Оператор** | ✅ CRUD | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
-| **Менеджер** | 👁 | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| **Руководитель** | 👁 | 👁 | 👁 | 👁 | 👁 | ✅ | ✅ | ❌ |
+### Полная матрица доступа
+
+| Роль | Товары | Приёмка | Отгрузка | Перемещение | Списание | Инвентаризация | Отчёты | Загрузка | Админка |
+|---|---|---|---|---|---|---|---|---|---|
+| **Администратор** | ✅ CRUD | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Кладовщик** | 👁 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **Оператор** | ✅ CRUD | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| **Менеджер** | 👁 | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| **Руководитель** | 👁 | 👁 | 👁 | 👁 | 👁 | ✅ | ✅ | ✅ | ❌ |
 
 **Легенда:**
 - ✅ — полный доступ
 - 👁 — только просмотр
-- ❌ — нет доступа
+- ❌ — нет доступа (403)
+
+### RBAC на чтение
+
+**Важно:** проверка ролей работает **не только на изменение**, но и **на чтение**. Менеджер, попытавшийся открыть `/operations/receipts` по прямому URL, получит **403**, а не список приёмок. Это предотвращает утечку данных через прямые ссылки.
+
+Декоратор `@require_role(...)` стоит на **всех** роутах, включая списки и просмотр.
 
 **Отмена документов** доступна только **Администратору** и **Кладовщику**.
 
@@ -400,44 +465,34 @@ Warehouse ─┼─ TransferDoc ── TransferItem
 
 ## 🧪 Тестирование
 
-### Запуск всех тестов
+### Запуск
 
 ```bash
+# Все тесты
 pytest
-```
 
-### Запуск с покрытием
-
-```bash
+# С покрытием
 pytest --cov=. --cov-report=html
-```
 
-Отчёт откроется в `htmlcov/index.html`.
+# Конкретный файл
+pytest tests/test_security.py -v
 
-### Запуск конкретного файла
-
-```bash
-pytest tests/test_auth.py -v
-```
-
-### Запуск конкретного теста
-
-```bash
-pytest tests/test_auth.py::test_login_success -v
+# Конкретный тест
+pytest tests/test_security.py::test_manager_cannot_access_receipts_list -v
 ```
 
 ### Статистика
 
 | Показатель | Значение |
 |---|---|
-| Всего тестов | **48** |
+| Всего тестов | **52** |
 | Покрытие кода | **~93%** |
 | Проваленных | **0** |
 
 ### Что покрыто
 
 - ✅ Аутентификация (вход, выход, неверный пароль)
-- ✅ Роли (доступ к админке, 403)
+- ✅ RBAC (доступ к админке, к спискам приёмок/инвентаризации, отчётам)
 - ✅ CRUD товаров (создание, редактирование, удаление, дубликаты)
 - ✅ Документы (приёмка, отгрузка, перемещение, списание)
 - ✅ Логика остатков (увеличение, уменьшение, недостаток)
@@ -457,14 +512,18 @@ pytest tests/test_auth.py::test_login_success -v
 | Угроза | Защита |
 |---|---|
 | **SQL-инъекции** | Только ORM (SQLAlchemy), экранирование LIKE |
-| **XSS** | Jinja2 autoescape, security headers |
+| **XSS** | Jinja2 autoescape, security headers, CSP (prod) |
 | **CSRF** | Flask-WTF токены во всех формах |
+| **Подделка сессии** | `SECRET_KEY` обязателен в PROD (без дефолта) |
+| **MITM / downgrade** | `SESSION_COOKIE_SECURE=True` в PROD + Talisman форсит HTTPS |
 | **Brute force** | Строгие правила валидации пароля |
-| **Session hijacking** | HttpOnly + SameSite cookies, session_protection=strong |
+| **Session hijacking** | HttpOnly + SameSite cookies, `session_protection=strong` |
 | **Clickjacking** | `X-Frame-Options: DENY` |
 | **MIME sniffing** | `X-Content-Type-Options: nosniff` |
 | **Open redirect** | Проверка `next` URL после логина |
-| **Пароли** | Хеширование `pbkdf2:sha256` |
+| **Утечка SQL-исключений** | `flash_error()` — логирует, отдаёт безопасный текст |
+| **Дефолтные пароли** | Обязательны в ENV (PROD) или генерируются случайно (DEV) |
+| **Обход RBAC** | `@require_role` на **всех** роутах, включая чтение |
 
 ### Заголовки безопасности
 
@@ -477,71 +536,29 @@ Referrer-Policy: strict-origin-when-cross-origin
 Permissions-Policy: geolocation=(), microphone=(), camera=()
 ```
 
-### Роли и права
+В **production** дополнительно:
 
-- Проверка ролей через декоратор `@require_role(...)` — `abort(403)` при недостатке прав.
-- Отмена документов и управление пользователями доступны только определённым ролям.
-- Аудит через `ActionLog` — все значимые действия фиксируются.
-
-### Что делать в production
-
-1. **Задай `FLASK_SECRET_KEY`** через переменную окружения.
-2. **Включи HTTPS** — `Talisman(force_https=True)`.
-3. **Используй PostgreSQL** вместо SQLite.
-4. **Запускай через gunicorn/waitress**.
-5. **Настрой регулярные бэкапы БД**.
-
----
-
-## 📸 Скриншоты
-
-> Раздел опциональный. Ниже — структура страниц для скриншотов.
-
-| Страница | URL | Что показывает |
-|---|---|---|
-| Дашборд | `/` | Метрики, товары ниже минимума, последние действия |
-| Вход | `/login` | Форма логина |
-| Товары | `/products/` | Список, поиск, фильтр |
-| Приёмка | `/operations/receipts` | Список документов, статус |
-| Просмотр документа | `/operations/receipts/1` | Детали, позиции, отмена, печать |
-| Инвентаризация | `/inventory/` | Список, статус, ведомость расхождений |
-| Отчёты | `/reports/stock` | Таблица остатков, экспорт CSV |
-| Админка | `/admin/users` | Управление пользователями |
-| Журнал | `/admin/log` | Лог всех действий |
-
----
-
-## 🤝 Вклад в проект
-
-1. Форкни репозиторий.
-2. Создай ветку: `git checkout -b feature/новая-фича`.
-3. Коммит: `git commit -am "Добавил новую фичу"`.
-4. Пуш: `git push origin feature/новая-фича`.
-5. Открой Pull Request.
-
-### Стандарты кода
-
-- Python 3.12+
-- Стиль — **PEP 8** (проверяется через `ruff`)
-- Строки — не длиннее **100 символов**
-- Обязательные docstrings у публичных функций
-- Типизация — где возможно
-
-### Команды
-
-```bash
-# Проверка стиля
-ruff check .
-
-# Форматирование
-ruff format .
-
-# Типизация
-mypy .
-
-# Тесты
-pytest
 ```
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+Content-Security-Policy: default-src 'self'; ...
+```
+
+### Управление паролями
+
+- Пароли хранятся в виде `pbkdf2:sha256:600000` (600 000 итераций).
+- Обязательные требования: минимум 8 символов.
+- Возможность смены через `/change-password` для любого пользователя.
+- Пароли по умолчанию **отсутствуют** — задаются через ENV или генерируются.
+
+### Обязательные действия в production
+
+1. ✅ Задай `FLASK_ENV=production`.
+2. ✅ Задай `FLASK_SECRET_KEY` (без него приложение не запустится).
+3. ✅ Задай `*_PASSWORD` для всех пользователей.
+4. ✅ Включи HTTPS (Talisman сделает это автоматически).
+5. ✅ Используй PostgreSQL вместо SQLite.
+6. ✅ Запускай через gunicorn/waitress.
+7. ✅ Настрой регулярные бэкапы БД.
 
 ---
 
@@ -569,10 +586,12 @@ pytest
 - **ГОСТ 19.101-77** — Единая система программной документации
 - Документация [Flask](https://flask.palletsprojects.com/)
 - Документация [SQLAlchemy](https://docs.sqlalchemy.org/)
+- Документация [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 
 ---
 
 <p align="center">
   <b>АИС «Складской учёт» © 2026</b><br>
-  Разработано на Python + Flask + SQLite
+  Разработано на Python + Flask + SQLite<br>
+  <sub>52 теста · покрытие 93% · OWASP-aware</sub>
 </p>
